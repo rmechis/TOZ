@@ -5,13 +5,13 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract MyToken is ERC20, Ownable {
+contract OzToken is ERC20, Ownable {
     constructor() ERC20("OzToken", "TOZ") Ownable(msg.sender) {
         _mint(msg.sender, 1000 * 10 ** decimals());
     }
 }
 
-contract MyNFT is ERC721, Ownable {
+contract OzNFT is ERC721, Ownable {
     uint256 public tokenCounter;
 
     constructor() ERC721("OzNFT", "NOZ") Ownable(msg.sender) {
@@ -27,16 +27,16 @@ contract MyNFT is ERC721, Ownable {
 }
 
 contract TokenManager is Ownable {
-    MyToken public erc20Token;
-    MyNFT public erc721Token;
+    OzToken public erc20Token;
+    OzNFT public erc721Token;
     uint256 public constant MINT_THRESHOLD = 5 * 10 ** 18; // 5 tokens (considerando 18 casas decimais padrão)
 
     event ERC20Received(address from, uint256 amount);
     event ERC721Minted(address to, uint256 tokenId);
 
     constructor(address _erc20Token, address _erc721Token) Ownable(msg.sender) {
-        erc20Token = MyToken(_erc20Token);
-        erc721Token = MyNFT(_erc721Token);
+        erc20Token = OzToken(_erc20Token);
+        erc721Token = OzNFT(_erc721Token);
     }
 
     function transferERC20ToContract(uint256 amount) external {
