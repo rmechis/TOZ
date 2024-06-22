@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract MyToken is ERC20, Ownable {
-    constructor() ERC20("OzToken", "TOZ") {
+    constructor() ERC20("OzToken", "TOZ") Ownable(msg.sender) {
         _mint(msg.sender, 1000 * 10 ** decimals());
     }
 }
@@ -14,7 +14,7 @@ contract MyToken is ERC20, Ownable {
 contract MyNFT is ERC721, Ownable {
     uint256 public tokenCounter;
 
-    constructor() ERC721("OzNFT", "NOZ") Ownable() {
+    constructor() ERC721("OzNFT", "NOZ") Ownable(msg.sender) {
         tokenCounter = 0;
     }
 
@@ -34,23 +34,22 @@ contract TokenManager is Ownable {
     event ERC20Received(address from, uint256 amount);
     event ERC721Minted(address to, uint256 tokenId);
 
-    constructor(address _erc20Token, address _erc721Token) {
+    constructor(address _erc20Token, address _erc721Token) Ownable(msg.sender) {
         erc20Token = MyToken(_erc20Token);
         erc721Token = MyNFT(_erc721Token);
     }
 
-    function onERC20Received(address from, uint256 amount) external {
-        require(msg.sender == address(erc20Token), "Only ERC20 token contract can call this function");
-        require(amount >= MINT_THRESHOLD, "Insufficient ERC20 tokens sent");
-
-        // Mint new ERC721 token and transfer to the sender
-        uint256 newTokenId = erc721Token.mintNFT(from);
-        emit ERC721Minted(from, newTokenId);
-    }
-
     function transferERC20ToContract(uint256 amount) external {
         require(amount >= MINT_THRESHOLD, "Minimum 5 ERC20 tokens required");
-        erc20Token.transferFrom(msg.sender, address(this), amount);
-        onERC20Received(msg.sender, amount);
+        
+        // Transfer ERC20 tokens from sender to this contract
+        bool success = erc20Token.transferFrom(msg.sender, address(this), amount);
+        require(success, "ERC20 token transfer failed");
+
+        // Mint new ERC721 token and transfer to the sender
+        uint256 newTokenId = erc721Token.mintNFT(msg.sender);
+        emit ERC721Minted(msg.sender, newTokenId);
+        
+        emit ERC20Received(msg.sender, amount);
     }
 }
