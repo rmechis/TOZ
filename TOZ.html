@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DApp OzToken and OzNFT</title>
+</head>
+<body>
+    <h1>OzToken and OzNFT DApp</h1>
+    <button id="connectButton">Conectar MetaMask</button>
+    <p id="walletAddress"></p>
+    
+    <h2>Criação de NFT</h2>
+    <button id="approveButton">Aprovar 5 Tokens</button>
+    <button id="createNFTButton">Criar NFT</button>
+    
+    <h2>Consultar País por Token ID</h2>
+    <input type="number" id="tokenIdInput" placeholder="Token ID">
+    <button id="getCountryButton">Obter País</button>
+    <p id="countryDisplay"></p>
+    
+    <h2>Consultar NFTs por Endereço</h2>
+    <input type="text" id="ownerAddressInput" placeholder="Endereço do Proprietário">
+    <button id="getTokensByOwnerButton">Obter NFTs</button>
+    <ul id="tokensList"></ul>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.3.5/dist/web3.min.js"></script>
+    <script>
+        const erc20Address = 'ENDEREÇO_DO_CONTRATO_OzToken';  // Atualize com o endereço do contrato OzToken
+        const managerAddress = 'ENDEREÇO_DO_CONTRATO_TokenManager';  // Atualize com o endereço do contrato TokenManager
+        const erc20ABI = [
+            // Adicione o ABI do contrato ERC20 aqui
+            {
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "spender",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "amount",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "approve",
+                "outputs": [
+                    {
+                        "internalType": "bool",
+                        "name": "",
+                        "type": "bool"
+                    }
+                ],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "account",
+                        "type": "address"
+                    }
+                ],
+                "name": "balanceOf",
+                "outputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
+        const managerABI = [
+            {
+                "inputs": [],
+                "stateMutability": "nonpayable",
+                "type": "constructor"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "amount",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "transferERC20ToContract",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "tokenId",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "getCountryByTokenId",
+                "outputs": [
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "owner",
+                        "type": "address"
+                    }
+                ],
+                "name": "getTokenIdsByOwner",
+                "outputs": [
+                    {
+                        "internalType": "uint256[]",
+                        "name": "",
+                        "type": "uint256[]"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
+
+        let web3;
+        let erc20Contract;
+        let managerContract;
+        let userAccount;
+
+        async function connectMetaMask() {
+            if (window.ethereum) {
+                try {
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    web3 = new Web3(window.ethereum);
+                    const accounts = await web3.eth.getAccounts();
+                    userAccount = accounts[0];
+                    document.getElementById('walletAddress').innerText = `Conectado: ${userAccount}`;
+                    erc20Contract = new web3.eth.Contract(erc20ABI, erc20Address);
+                    managerContract = new web3.eth.Contract(managerABI, managerAddress);
+                } catch (error) {
+                    console.error('Usuário negou a conexão ao MetaMask', error);
+                }
+            } else {
+                alert('MetaMask não está instalado!');
+            }
+        }
+
+        async function approveTokens() {
+            if (!userAccount || !erc20Contract) {
+                alert('Conecte-se ao MetaMask primeiro.');
+                return;
+            }
+            try {
+                const amount = web3.utils.toWei('5', 'ether'); // 5 tokens
+                await erc20Contract.methods.approve(managerAddress, amount).send({ from: userAccount });
+                alert('Aprovação de 5 tokens realizada com sucesso!');
+            } catch (error) {
+                console.error('Erro ao aprovar tokens', error);
+                alert(`Erro ao aprovar tokens: ${error.message}`);
+            }
+        }
+
+        async function createNFT() {
+            if (!userAccount || !managerContract) {
+                alert('Conecte-se ao MetaMask primeiro.');
+                return;
+            }
+            try {
+                const amount = web3.utils.toWei('5', 'ether'); // 5 tokens
+                const gasEstimate = await managerContract.methods.transferERC20ToContract(amount).estimateGas({ from: userAccount });
+                await managerContract.methods.transferERC20ToContract(amount).send({ from: userAccount, gas: gasEstimate });
+                alert('NFT criado com sucesso!');
+            } catch (error) {
+                console.error('Erro ao criar NFT', error);
+                alert(`Erro ao criar NFT: ${error.message}`);
+            }
+        }
+
+        async function getCountryByTokenId() {
+            const tokenId = document.getElementById('tokenIdInput').value;
+            if (!tokenId || !managerContract) {
+                alert('Insira um Token ID válido e conecte-se ao MetaMask.');
+                return;
+            }
+            try {
+                const country = await managerContract.methods.getCountryByTokenId(tokenId).call();
+                document.getElementById('countryDisplay').innerText = `País: ${country}`;
+            } catch (error) {
+                console.error('Erro ao obter país', error);
+                alert(`Erro ao obter país: ${error.message}`);
+            }
+        }
+
+        async function getTokensByOwner() {
+            const ownerAddress = document.getElementById('ownerAddressInput').value;
+            if (!ownerAddress || !managerContract) {
+                alert('Insira um endereço válido e conecte-se ao MetaMask.');
+                return;
+            }
+            try {
+                const tokenIds = await managerContract.methods.getTokenIdsByOwner(ownerAddress).call();
+                const tokensList = document.getElementById('tokensList');
+                tokensList.innerHTML = '';
+                for (const tokenId of tokenIds) {
+                    const country = await managerContract.methods.getCountryByTokenId(tokenId).call();
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `Token ID: ${tokenId}, País: ${country}`;
+                    tokensList.appendChild(listItem);
+                }
+            } catch (error) {
+                console.error('Erro ao obter tokens', error);
+                alert(`Erro ao obter tokens: ${error.message}`);
+            }
+        }
+
+        document.getElementById('connectButton').addEventListener('click', connectMetaMask);
+        document.getElementById('approveButton').addEventListener('click', approveTokens);
+        document.getElementById('createNFTButton').addEventListener('click', createNFT);
+        document.getElementById('getCountryButton').addEventListener('click', getCountryByTokenId);
+        document.getElementById('getTokensByOwnerButton').addEventListener('click', getTokensByOwner);
+    </script>
+</body>
+</html>
