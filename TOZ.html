@@ -29,109 +29,576 @@
         const erc20Address = '0x5fd54d9e66b091e5c5c7b516ed24c464a512aaf9';  // Atualize com o endereço do contrato OzToken
         const managerAddress = '0xa8e4df7b8f3f3fe51ef34da02755ff87493def94';  // Atualize com o endereço do contrato TokenManager
         const erc20ABI = [
-            // Adicione o ABI do contrato ERC20 aqui
-            {
-                "inputs": [
-                    {
-                        "internalType": "address",
-                        "name": "spender",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "amount",
-                        "type": "uint256"
-                    }
-                ],
-                "name": "approve",
-                "outputs": [
-                    {
-                        "internalType": "bool",
-                        "name": "",
-                        "type": "bool"
-                    }
-                ],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {
-                        "internalType": "address",
-                        "name": "account",
-                        "type": "address"
-                    }
-                ],
-                "name": "balanceOf",
-                "outputs": [
-                    {
-                        "internalType": "uint256",
-                        "name": "",
-                        "type": "uint256"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            }
+        	{
+        		"inputs": [],
+        		"stateMutability": "nonpayable",
+        		"type": "constructor"
+        	},
+        	{
+        		"inputs": [
+        			{
+        				"internalType": "address",
+        				"name": "spender",
+        				"type": "address"
+        			},
+        			{
+        				"internalType": "uint256",
+        				"name": "allowance",
+        				"type": "uint256"
+        			},
+        			{
+        				"internalType": "uint256",
+        				"name": "needed",
+        				"type": "uint256"
+        			}
+        		],
+        		"name": "ERC20InsufficientAllowance",
+        		"type": "error"
+        	},
+        	{
+        		"inputs": [
+        			{
+        				"internalType": "address",
+        				"name": "sender",
+        				"type": "address"
+        			},
+        			{
+        				"internalType": "uint256",
+        				"name": "balance",
+        				"type": "uint256"
+        			},
+        			{
+        				"internalType": "uint256",
+        				"name": "needed",
+        				"type": "uint256"
+        			}
+        		],
+        		"name": "ERC20InsufficientBalance",
+        		"type": "error"
+        	},
+        	{
+        		"inputs": [
+        			{
+        				"internalType": "address",
+        				"name": "approver",
+        				"type": "address"
+        			}
+        		],
+        		"name": "ERC20InvalidApprover",
+        		"type": "error"
+        	},
+        	{
+        		"inputs": [
+        			{
+        				"internalType": "address",
+        				"name": "receiver",
+        				"type": "address"
+        			}
+        		],
+        		"name": "ERC20InvalidReceiver",
+        		"type": "error"
+        	},
+        	{
+        		"inputs": [
+        			{
+        				"internalType": "address",
+        				"name": "sender",
+        				"type": "address"
+        			}
+        		],
+        		"name": "ERC20InvalidSender",
+        		"type": "error"
+        	},
+        	{
+        		"inputs": [
+        			{
+        				"internalType": "address",
+        				"name": "spender",
+        				"type": "address"
+        			}
+        		],
+        		"name": "ERC20InvalidSpender",
+        		"type": "error"
+        	},
+        	{
+        		"inputs": [
+        			{
+        				"internalType": "address",
+        				"name": "owner",
+        				"type": "address"
+        			}
+        		],
+        		"name": "OwnableInvalidOwner",
+        		"type": "error"
+        	},
+        	{
+        		"inputs": [
+        			{
+        				"internalType": "address",
+        				"name": "account",
+        				"type": "address"
+        			}
+        		],
+        		"name": "OwnableUnauthorizedAccount",
+        		"type": "error"
+        	},
+        	{
+        		"anonymous": false,
+        		"inputs": [
+        			{
+        				"indexed": true,
+        				"internalType": "address",
+        				"name": "owner",
+        				"type": "address"
+        			},
+        			{
+        				"indexed": true,
+        				"internalType": "address",
+        				"name": "spender",
+        				"type": "address"
+        			},
+        			{
+        				"indexed": false,
+        				"internalType": "uint256",
+        				"name": "value",
+        				"type": "uint256"
+        			}
+        		],
+        		"name": "Approval",
+        		"type": "event"
+        	},
+        	{
+        		"anonymous": false,
+        		"inputs": [
+        			{
+        				"indexed": true,
+        				"internalType": "address",
+        				"name": "previousOwner",
+        				"type": "address"
+        			},
+        			{
+        				"indexed": true,
+        				"internalType": "address",
+        				"name": "newOwner",
+        				"type": "address"
+        			}
+        		],
+        		"name": "OwnershipTransferred",
+        		"type": "event"
+        	},
+        	{
+        		"anonymous": false,
+        		"inputs": [
+        			{
+        				"indexed": true,
+        				"internalType": "address",
+        				"name": "from",
+        				"type": "address"
+        			},
+        			{
+        				"indexed": true,
+        				"internalType": "address",
+        				"name": "to",
+        				"type": "address"
+        			},
+        			{
+        				"indexed": false,
+        				"internalType": "uint256",
+        				"name": "value",
+        				"type": "uint256"
+        			}
+        		],
+        		"name": "Transfer",
+        		"type": "event"
+        	},
+        	{
+        		"inputs": [
+        			{
+        				"internalType": "address",
+        				"name": "owner",
+        				"type": "address"
+        			},
+        			{
+        				"internalType": "address",
+        				"name": "spender",
+        				"type": "address"
+        			}
+        		],
+        		"name": "allowance",
+        		"outputs": [
+        			{
+        				"internalType": "uint256",
+        				"name": "",
+        				"type": "uint256"
+        			}
+        		],
+        		"stateMutability": "view",
+        		"type": "function"
+        	},
+        	{
+        		"inputs": [
+        			{
+        				"internalType": "address",
+        				"name": "spender",
+        				"type": "address"
+        			},
+        			{
+        				"internalType": "uint256",
+        				"name": "value",
+        				"type": "uint256"
+        			}
+        		],
+        		"name": "approve",
+        		"outputs": [
+        			{
+        				"internalType": "bool",
+        				"name": "",
+        				"type": "bool"
+        			}
+        		],
+        		"stateMutability": "nonpayable",
+        		"type": "function"
+        	},
+        	{
+        		"inputs": [
+        			{
+        				"internalType": "address",
+        				"name": "account",
+        				"type": "address"
+        			}
+        		],
+        		"name": "balanceOf",
+        		"outputs": [
+        			{
+        				"internalType": "uint256",
+        				"name": "",
+        				"type": "uint256"
+        			}
+        		],
+        		"stateMutability": "view",
+        		"type": "function"
+        	},
+        	{
+        		"inputs": [],
+        		"name": "decimals",
+        		"outputs": [
+        			{
+        				"internalType": "uint8",
+        				"name": "",
+        				"type": "uint8"
+        			}
+        		],
+        		"stateMutability": "view",
+        		"type": "function"
+        	},
+        	{
+        		"inputs": [],
+        		"name": "name",
+        		"outputs": [
+        			{
+        				"internalType": "string",
+        				"name": "",
+        				"type": "string"
+        			}
+        		],
+        		"stateMutability": "view",
+        		"type": "function"
+        	},
+        	{
+        		"inputs": [],
+        		"name": "owner",
+        		"outputs": [
+        			{
+        				"internalType": "address",
+        				"name": "",
+        				"type": "address"
+        			}
+        		],
+        		"stateMutability": "view",
+        		"type": "function"
+        	},
+        	{
+        		"inputs": [],
+        		"name": "renounceOwnership",
+        		"outputs": [],
+        		"stateMutability": "nonpayable",
+        		"type": "function"
+        	},
+        	{
+        		"inputs": [],
+        		"name": "symbol",
+        		"outputs": [
+        			{
+        				"internalType": "string",
+        				"name": "",
+        				"type": "string"
+        			}
+        		],
+        		"stateMutability": "view",
+        		"type": "function"
+        	},
+        	{
+        		"inputs": [],
+        		"name": "totalSupply",
+        		"outputs": [
+        			{
+        				"internalType": "uint256",
+        				"name": "",
+        				"type": "uint256"
+        			}
+        		],
+        		"stateMutability": "view",
+        		"type": "function"
+        	},
+        	{
+        		"inputs": [
+        			{
+        				"internalType": "address",
+        				"name": "to",
+        				"type": "address"
+        			},
+        			{
+        				"internalType": "uint256",
+        				"name": "value",
+        				"type": "uint256"
+        			}
+        		],
+        		"name": "transfer",
+        		"outputs": [
+        			{
+        				"internalType": "bool",
+        				"name": "",
+        				"type": "bool"
+        			}
+        		],
+        		"stateMutability": "nonpayable",
+        		"type": "function"
+        	},
+        	{
+        		"inputs": [
+        			{
+        				"internalType": "address",
+        				"name": "from",
+        				"type": "address"
+        			},
+        			{
+        				"internalType": "address",
+        				"name": "to",
+        				"type": "address"
+        			},
+        			{
+        				"internalType": "uint256",
+        				"name": "value",
+        				"type": "uint256"
+        			}
+        		],
+        		"name": "transferFrom",
+        		"outputs": [
+        			{
+        				"internalType": "bool",
+        				"name": "",
+        				"type": "bool"
+        			}
+        		],
+        		"stateMutability": "nonpayable",
+        		"type": "function"
+        	},
+        	{
+        		"inputs": [
+        			{
+        				"internalType": "address",
+        				"name": "newOwner",
+        				"type": "address"
+        			}
+        		],
+        		"name": "transferOwnership",
+        		"outputs": [],
+        		"stateMutability": "nonpayable",
+        		"type": "function"
+        	}
         ];
         
         const managerABI = [
-            {
-                "inputs": [],
-                "stateMutability": "nonpayable",
-                "type": "constructor"
-            },
-            {
-                "inputs": [
-                    {
-                        "internalType": "uint256",
-                        "name": "amount",
-                        "type": "uint256"
-                    }
-                ],
-                "name": "transferERC20ToContract",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {
-                        "internalType": "uint256",
-                        "name": "tokenId",
-                        "type": "uint256"
-                    }
-                ],
-                "name": "getCountryByTokenId",
-                "outputs": [
-                    {
-                        "internalType": "string",
-                        "name": "",
-                        "type": "string"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {
-                        "internalType": "address",
-                        "name": "owner",
-                        "type": "address"
-                    }
-                ],
-                "name": "getTokenIdsByOwner",
-                "outputs": [
-                    {
-                        "internalType": "uint256[]",
-                        "name": "",
-                        "type": "uint256[]"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            }
+        	{
+        		"inputs": [
+        			{
+        				"internalType": "address",
+        				"name": "owner",
+        				"type": "address"
+        			}
+        		],
+        		"name": "OwnableInvalidOwner",
+        		"type": "error"
+        	},
+        	{
+        		"inputs": [
+        			{
+        				"internalType": "address",
+        				"name": "account",
+        				"type": "address"
+        			}
+        		],
+        		"name": "OwnableUnauthorizedAccount",
+        		"type": "error"
+        	},
+        	{
+        		"anonymous": false,
+        		"inputs": [
+        			{
+        				"indexed": false,
+        				"internalType": "address",
+        				"name": "from",
+        				"type": "address"
+        			},
+        			{
+        				"indexed": false,
+        				"internalType": "uint256",
+        				"name": "amount",
+        				"type": "uint256"
+        			}
+        		],
+        		"name": "ERC20Received",
+        		"type": "event"
+        	},
+        	{
+        		"anonymous": false,
+        		"inputs": [
+        			{
+        				"indexed": false,
+        				"internalType": "address",
+        				"name": "to",
+        				"type": "address"
+        			},
+        			{
+        				"indexed": false,
+        				"internalType": "uint256",
+        				"name": "tokenId",
+        				"type": "uint256"
+        			}
+        		],
+        		"name": "ERC721Minted",
+        		"type": "event"
+        	},
+        	{
+        		"anonymous": false,
+        		"inputs": [
+        			{
+        				"indexed": true,
+        				"internalType": "address",
+        				"name": "previousOwner",
+        				"type": "address"
+        			},
+        			{
+        				"indexed": true,
+        				"internalType": "address",
+        				"name": "newOwner",
+        				"type": "address"
+        			}
+        		],
+        		"name": "OwnershipTransferred",
+        		"type": "event"
+        	},
+        	{
+        		"inputs": [],
+        		"name": "renounceOwnership",
+        		"outputs": [],
+        		"stateMutability": "nonpayable",
+        		"type": "function"
+        	},
+        	{
+        		"inputs": [
+        			{
+        				"internalType": "uint256",
+        				"name": "amount",
+        				"type": "uint256"
+        			}
+        		],
+        		"name": "transferERC20ToContract",
+        		"outputs": [],
+        		"stateMutability": "nonpayable",
+        		"type": "function"
+        	},
+        	{
+        		"inputs": [
+        			{
+        				"internalType": "address",
+        				"name": "newOwner",
+        				"type": "address"
+        			}
+        		],
+        		"name": "transferOwnership",
+        		"outputs": [],
+        		"stateMutability": "nonpayable",
+        		"type": "function"
+        	},
+        	{
+        		"inputs": [
+        			{
+        				"internalType": "address",
+        				"name": "_erc20Token",
+        				"type": "address"
+        			},
+        			{
+        				"internalType": "address",
+        				"name": "_erc721Token",
+        				"type": "address"
+        			}
+        		],
+        		"stateMutability": "nonpayable",
+        		"type": "constructor"
+        	},
+        	{
+        		"inputs": [],
+        		"name": "erc20Token",
+        		"outputs": [
+        			{
+        				"internalType": "contract OzToken",
+        				"name": "",
+        				"type": "address"
+        			}
+        		],
+        		"stateMutability": "view",
+        		"type": "function"
+        	},
+        	{
+        		"inputs": [],
+        		"name": "erc721Token",
+        		"outputs": [
+        			{
+        				"internalType": "contract OzNFT",
+        				"name": "",
+        				"type": "address"
+        			}
+        		],
+        		"stateMutability": "view",
+        		"type": "function"
+        	},
+        	{
+        		"inputs": [],
+        		"name": "MINT_THRESHOLD",
+        		"outputs": [
+        			{
+        				"internalType": "uint256",
+        				"name": "",
+        				"type": "uint256"
+        			}
+        		],
+        		"stateMutability": "view",
+        		"type": "function"
+        	},
+        	{
+        		"inputs": [],
+        		"name": "owner",
+        		"outputs": [
+        			{
+        				"internalType": "address",
+        				"name": "",
+        				"type": "address"
+        			}
+        		],
+        		"stateMutability": "view",
+        		"type": "function"
+        	}
         ];
 
         let web3;
